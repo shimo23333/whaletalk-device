@@ -50,9 +50,22 @@ ip a
 |cd ~|直接回到使用者資料夾|
 |cat <檔案名稱>|預覽文字檔|
 |python <檔案名稱>|執行 .py 的程式|
+|[Ctrl]+[C]|中斷執行中程式|
 
 ### Git 操作
 |指令|操作|
 |---|---|
 |git clone <github專案連結>|第一次將github專案抓下來|
 |git pull|抓下來最新的版本(要先進到專案資料夾內)|
+
+## 五、安裝必要的 Python 模組
+### Pygame
+用來播放聲音。
+```
+pip install pygame
+```
+### gTTS
+Google 出品的文字轉聲音。
+```
+pip install gtts
+```
