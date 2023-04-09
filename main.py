@@ -137,10 +137,10 @@ def fetch():
 
 # 開始
 print("-----------------------")
-print(colored("WhaleTalk", "yellow"), "開始")
+print(colored("WhaleTalk", "yellow"), "啟動")
 time.sleep(1)
 
-fetch()
+# fetch()
 # def print_counter():
 #     global t
 #     print("hihi")
