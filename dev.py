@@ -36,37 +36,36 @@ import board
 import neopixel
 from LedControl import LedControl
 import os
+from pydub import AudioSegment
 
 fetch_timespan = 3
 
+uid = "grass"
+wid = "w001"
+
 api_host = "https://whaletalk.tw/api/"
-msg_url = "https://whaletalk.tw/api/Message/GetMyList?uid=grass&wid=w001"
+url_fetch_msg = "https://whaletalk.tw/api/Message/GetUnreadList?uid={}&wid={}".format(uid, wid)
+url_msg_read = "https://whaletalk.tw/api/Message/SetRead"
 
 led = LedControl()
 
 
-def check_new_messages():
-    global url
+def fetch_new_messages():
+    cmd("led_fetch.py")
     try:
-        r = requests.get(msg_url, timeout=3)
+        r = requests.get(url_fetch_msg, timeout=10)
         return r.json()
     except requests.exceptions.RequestException as e:
         print(e)
         return None
 
-def preview_content(content):
-    limit = 20
-    if len(content) <= limit:
-        return content.replace("\n", " ")[:limit]
-    else:
-        return content.replace("\n", " ")[:limit]+"..."
-
-def print_message_list(list):
-    for m in list:
-        typ = ""
-        if m['type'] == 1: typ = colored("text", "cyan")
-        if m['type'] == 2: typ = colored("voice", "magenta")
-        print("ID:{}\t[{}] {}  {}  {}".format(m['id'], typ, m['create_at'], m['schedule_time'], preview_content(m['content'])))
+def set_message_read(id):
+    try:
+        r = requests.get(url_msg_read+"?id={}".format(id), timeout=10)
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return None
 
 
 def play_msg(msg):
@@ -93,9 +92,16 @@ def play_msg_mp3(url):
     print("downloading mp3...")
     with tempfile.NamedTemporaryFile(delete=True) as fp:
         wget.download(url, '{}.mp3'.format(fp.name))
+
+        print("\nloudify...")
+        song = AudioSegment.from_mp3('{}.mp3'.format(fp.name))
+        louder_song = song + 12
+        louder_song.export('{}.mp3'.format(fp.name), format='mp3')
+
         print("\nplay...")
         mixer.init()
         mixer.music.load('{}.mp3'.format(fp.name))
+        mixer.music.set_volume(2.5)
         mixer.music.play(1)
         while mixer.music.get_busy():  # wait for music to finish playing
             time.sleep(1)
@@ -106,30 +112,6 @@ def play_mp3(file):
     mixer.music.play(1)
     while mixer.music.get_busy():  # wait for music to finish playing
         time.sleep(1)
-
-def start():
-    global t, fetch_timespan
-    msgList = check_new_messages()
-    if msgList == None:
-        print("cannot fetch, retry in ",fetch_timespan,"sec...")
-        t = Timer(fetch_timespan, fetch)
-        t.start()
-        return
-    
-    if len(msgList) <= 0:
-        print("no message, retry in ",fetch_timespan,"sec...")
-        t = Timer(fetch_timespan, fetch)
-        t.start()
-        return
-    
-    print("got", len(msgList), "datas:")
-    print_message_list(msgList)
-    play_msg(msgList[0])
-
-    
-    print("wait ",fetch_timespan,"sec...")
-    t = Timer(fetch_timespan, fetch)
-    t.start()
 
 
 def cmd(filename):
@@ -147,35 +129,22 @@ boot_action()
 while(True):
     # fetch new message
     print("fetching...")
-    time.sleep(1)
+    msgList = fetch_new_messages()
 
-    # play message
-    print("play message")
-    time.sleep(1)
-
-    # wait
-    print("wait")
-    time.sleep(3)
+    if msgList and len(msgList) > 0:
     
+        # play message
+        for m in msgList:
+            print("play: ({}) {}".format(m['id'], m['content']))
+            play_msg(m)
+
+            # set message as read
+            set_message_read(m['id'])
+
+            # wait for next message
+            time.sleep(1)
 
 
-# led.fetching()
-
-# fetch()
-# def print_counter():
-#     global t
-#     print("hihi")
-
-#     t = Timer(2, print_counter)
-#     t.start()
-
-
-# t = Timer(2, print_counter)
-# t.start()
-
-
-# mixer.init()
-# mixer.music.load("sample-15s.mp3")
-# mixer.music.play()
-# while mixer.music.get_busy():  # wait for music to finish playing
-#     time.sleep(1)
+    # wait for next fetch
+    print("wait")
+    time.sleep(5)
