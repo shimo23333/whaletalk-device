@@ -36,7 +36,7 @@ import board
 import neopixel
 from LedControl import LedControl
 import os
-from pydub import AudioSegment
+#from pydub import AudioSegment
 
 fetch_timespan = 3
 
@@ -93,10 +93,10 @@ def play_msg_mp3(url):
     with tempfile.NamedTemporaryFile(delete=True) as fp:
         wget.download(url, '{}.mp3'.format(fp.name))
 
-        print("\nloudify...")
-        song = AudioSegment.from_mp3('{}.mp3'.format(fp.name))
-        louder_song = song + 12
-        louder_song.export('{}.mp3'.format(fp.name), format='mp3')
+        #print("\nloudify...")
+        #song = AudioSegment.from_mp3('{}.mp3'.format(fp.name))
+        #louder_song = song + 12
+        #louder_song.export('{}.mp3'.format(fp.name), format='mp3')
 
         print("\nplay...")
         mixer.init()
